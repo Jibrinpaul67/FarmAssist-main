@@ -1,0 +1,27 @@
+import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next'
+import './globals.css'
+
+export const metadata: Metadata = {
+  title: 'FarmAssist - AI Farm Advisor',
+  description: 'AI-powered farming advice for smallholder farmers worldwide',
+  generator: 'v0.app',
+  icons: {
+    icon: '/icon.svg',
+  },
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="en">
+      <body className="antialiased">
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  )
+}
