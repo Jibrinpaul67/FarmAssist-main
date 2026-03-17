@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, Mic, Menu, X } from "lucide-react";
+import { Send, Mic, Menu, X, Sun, Moon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface Message {
@@ -28,9 +28,21 @@ export default function FarmAssist() {
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("farmassist-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+
+      setIsDarkMode(shouldUseDark);
+      document.documentElement.classList.toggle("dark", shouldUseDark);
+    }
+  }, []);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -50,7 +62,8 @@ export default function FarmAssist() {
           "Hausa": "ha-NG",
           "Igbo": "ig-NG",
           "Français": "fr-FR",
-          "Swahili": "sw-KE"
+          "Swahili": "sw-KE",
+          "Turkish": "tr-TR"
         };
         recognition.lang = langMap[selectedLanguage] || "en-US";
 
@@ -244,6 +257,15 @@ export default function FarmAssist() {
     }
   };
 
+  const handleThemeToggle = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle("dark", next);
+      localStorage.setItem("farmassist-theme", next ? "dark" : "light");
+      return next;
+    });
+  };
+
   // Splash screen
  // Splash screen
 if (showSplash) {
@@ -261,7 +283,7 @@ if (showSplash) {
 }
 
   return (
-    <div className="flex h-screen bg-[#f9f8f5] text-[#0f1a08]">
+    <div className={`flex h-screen ${isDarkMode ? "bg-[#111814] text-[#f4f3ee]" : "bg-[#f9f8f5] text-[#0f1a08]"}`}>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -297,7 +319,7 @@ if (showSplash) {
         <div className="px-4 py-3 border-b border-white/10">
           <p className="text-xs text-white/50 font-mono mb-2">LANGUAGE</p>
           <div className="flex flex-wrap gap-2">
-            {["English", "Yoruba", "Hausa", "Igbo", "Français", "Swahili"].map(
+            {["English", "Yoruba", "Hausa", "Igbo", "Français", "Swahili", "Turkish"].map(
               (lang) => (
                 <button
                   key={lang}
@@ -369,24 +391,37 @@ if (showSplash) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="sticky top-0 bg-[#f9f8f5] border-b border-[#e5e5e0] px-6 py-4 flex items-center justify-between z-20">
-          <div className="flex items-center gap-4">
+        <header className={`sticky top-0 border-b px-6 py-4 flex items-center justify-between z-20 ${isDarkMode ? "bg-[#111814] border-[#2a342a]" : "bg-[#f9f8f5] border-[#e5e5e0]"}`}>
+          <div className="flex items-center gap-4 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden text-[#2d6a1a] hover:bg-white/50 p-2 rounded-lg transition-colors"
+              className={`md:hidden p-2 rounded-lg transition-colors ${isDarkMode ? "text-[#d8e4d2] hover:bg-[#1a241c]" : "text-[#2d6a1a] hover:bg-white/50"}`}
             >
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <h1 className="font-serif font-bold text-xl">
+            <h1 className="font-serif font-bold text-xl whitespace-nowrap">
               {currentChatId
                 ? chats.find((c) => c.id === currentChatId)?.title ||
                   "FarmAssist"
                 : "FarmAssist"}
             </h1>
           </div>
+          <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
+            <a href="#home" className="hover:text-[#6dbe3e] transition-colors">Home</a>
+            <a href="#about" className="hover:text-[#6dbe3e] transition-colors">About</a>
+            <a href="#contact" className="hover:text-[#6dbe3e] transition-colors">Contact</a>
+            <a href="mailto:support@farmassist.ai" className="hover:text-[#6dbe3e] transition-colors">support@farmassist.ai</a>
+          </nav>
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleThemeToggle}
+              className={`p-2 rounded-lg border transition-colors ${isDarkMode ? "bg-[#1a241c] border-[#2f3c2f] hover:bg-[#243129]" : "bg-white border-[#e5e5e0] hover:bg-[#f0efe8]"}`}
+              title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <div className="w-2 h-2 bg-[#6dbe3e] rounded-full breathe-glow"></div>
-            <span className="text-sm font-medium text-[#2d6a1a]">
+            <span className={`text-sm font-medium ${isDarkMode ? "text-[#b7d5a3]" : "text-[#2d6a1a]"}`}>
               AI Online
             </span>
           </div>
@@ -396,7 +431,7 @@ if (showSplash) {
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
           {messages.length === 0 ? (
             // Hero Screen
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto" id="home">
               {/* Welcome Card */}
               <div className="mb-12 relative overflow-hidden bg-gradient-to-br from-[#2d6a1a] to-[#1e4a0e] rounded-2xl p-8 md:p-12 text-white shimmer-animation">
                 <div className="absolute -top-20 -right-20 text-7xl opacity-10">
@@ -489,7 +524,7 @@ if (showSplash) {
                       setInput(card.title);
                       setTimeout(() => textareaRef.current?.focus(), 0);
                     }}
-                    className="card-hover-lift bg-white rounded-2xl p-6 border border-[#e5e5e0] hover:border-[#6dbe3e] group"
+                    className={`classic-grid-card p-6 border group text-left ${isDarkMode ? "bg-[#1a241c] border-[#314132]" : "bg-white border-[#d8d4c8]"}`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <span className="text-4xl">{card.emoji}</span>
@@ -500,16 +535,30 @@ if (showSplash) {
                     <h3 className="font-serif font-bold text-lg text-left mb-2">
                       {card.title}
                     </h3>
-                    <p className="text-sm text-[#8a9a7a] text-left">
+                    <p className={`text-sm text-left ${isDarkMode ? "text-[#c1cbb8]" : "text-[#6f7f60]"}`}>
                       {card.desc}
                     </p>
-                    <div className="mt-4 pt-4 border-t border-[#e5e5e0]">
+                    <div className={`mt-4 pt-4 border-t ${isDarkMode ? "border-[#314132]" : "border-[#e5e5e0]"}`}>
                       <p className="text-xs font-medium text-[#2d6a1a]">
                         Ask now →
                       </p>
                     </div>
                   </button>
                 ))}
+              </div>
+
+              <div id="about" className={`mb-6 rounded-xl border p-6 ${isDarkMode ? "bg-[#1a241c] border-[#314132]" : "bg-white border-[#d8d4c8]"}`}>
+                <h3 className="font-serif text-xl font-bold mb-2">About</h3>
+                <p className={isDarkMode ? "text-[#d1dac9]" : "text-[#55664a]"}>
+                  FarmAssist helps farmers make practical, informed decisions using clear AI guidance for crops, pests, weather, and market planning.
+                </p>
+              </div>
+
+              <div id="contact" className={`mb-10 rounded-xl border p-6 ${isDarkMode ? "bg-[#1a241c] border-[#314132]" : "bg-white border-[#d8d4c8]"}`}>
+                <h3 className="font-serif text-xl font-bold mb-2">Contact</h3>
+                <p className={isDarkMode ? "text-[#d1dac9]" : "text-[#55664a]"}>
+                  Email: <a href="mailto:support@farmassist.ai" className="text-[#2d6a1a] underline underline-offset-2">support@farmassist.ai</a>
+                </p>
               </div>
 
               {/* Features Badge */}
@@ -657,7 +706,7 @@ if (showSplash) {
         </div>
 
         {/* Input Bar */}
-        <div className="sticky bottom-0 bg-[#f9f8f5] border-t border-[#e5e5e0] px-4 md:px-8 py-6">
+        <div className={`sticky bottom-0 border-t px-4 md:px-8 py-6 ${isDarkMode ? "bg-[#111814] border-[#2a342a]" : "bg-[#f9f8f5] border-[#e5e5e0]"}`}>
           <div className="max-w-3xl mx-auto">
             <div className="flex gap-3 items-end">
               <textarea
@@ -666,7 +715,7 @@ if (showSplash) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me about farming..."
-                className="flex-1 bg-white rounded-2xl px-6 py-3 border border-[#e5e5e0] focus:border-[#2d6a1a] focus:outline-none focus:ring-2 focus:ring-[#6dbe3e]/20 resize-none font-satoshi text-base placeholder-[#8a9a7a]"
+                className={`flex-1 rounded-2xl px-6 py-3 border focus:border-[#2d6a1a] focus:outline-none focus:ring-2 focus:ring-[#6dbe3e]/20 resize-none font-satoshi text-base ${isDarkMode ? "bg-[#1a241c] border-[#314132] text-[#f4f3ee] placeholder-[#9fb194]" : "bg-white border-[#e5e5e0] placeholder-[#8a9a7a]"}`}
                 rows={1}
               />
               <button
